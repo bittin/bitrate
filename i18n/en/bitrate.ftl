@@ -1,4 +1,4 @@
-unit = Unit
+unit = Data Unit
 bits = Bits
 bytes = Bytes
 update-rate = Update Rate

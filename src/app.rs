@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-// TODO: Show icon when nothing enabled
-// TODO: vertical look and spacing
-// TODO: Popup look
+// TODO: Spacing for different panel sizes
 // TODO: Code cleanup
 use {
     crate::{
@@ -10,13 +8,23 @@ use {
     },
     cosmic::{
         self, Element,
+        applet::padded_control,
         cosmic_config::{self, Config, CosmicConfigEntry},
-        iced::{self, Alignment, Length, Limits, Subscription, widget::row, window},
+        cosmic_theme::Spacing,
+        iced::{
+            self, Alignment, Length, Limits, Rectangle, Subscription,
+            widget::{column, row},
+            window,
+        },
         iced_widget::Row,
         iced_winit::commands::popup::{destroy_popup, get_popup},
+        theme,
         widget::{
-            self, autosize, button, container, icon, segmented_button, segmented_control,
-            spin_button, toggler,
+            self, autosize, button, container, icon,
+            rectangle_tracker::{
+                RectangleTracker, RectangleUpdate, rectangle_tracker_subscription,
+            },
+            segmented_button, segmented_control, spin_button, toggler,
         },
     },
     std::sync::LazyLock,
@@ -51,6 +59,8 @@ pub struct AppModel {
     bits_entity: segmented_button::Entity,
     /// Bytes Entity
     bytes_entity: segmented_button::Entity,
+    rectangle_tracker: Option<RectangleTracker<u32>>,
+    rectangle: Rectangle,
 }
 
 /// Messages emitted by the application and its widgets.
@@ -65,6 +75,7 @@ pub enum Message {
     UpdateRateChanged(u8),
     ShowDownloadSpeedChanged(bool),
     ShowUploadSpeedChanged(bool),
+    Rectangle(RectangleUpdate<u32>),
 }
 
 impl AppModel {
@@ -85,6 +96,78 @@ impl AppModel {
 
         // Final truncation to ensure 5 chars total (optional safety)
         result.chars().take(5).collect()
+    }
+
+    fn horizontal_layout(
+        &self,
+        download_speed: &str,
+        download_unit: &str,
+        upload_speed: &str,
+        upload_unit: &str,
+    ) -> Element<'_, Message> {
+        let theme = cosmic::theme::active();
+        let cosmic = theme.cosmic();
+
+        let download_wrapper: Element<Message> = container(
+            row!(
+                container(self.core.applet.text(download_speed.to_string()))
+                    .align_right(Length::FillPortion(3)),
+                container(
+                    row!(
+                        self.core.applet.text(download_unit.to_string()),
+                        icon::from_name("go-down-symbolic").icon(),
+                    )
+                    .spacing(cosmic.space_xxs())
+                    .align_y(Alignment::Center)
+                )
+                .align_right(Length::FillPortion(4)),
+            )
+            .spacing(cosmic.space_xxs())
+            .align_y(Alignment::Center),
+        )
+        .align_right(Length::Fill)
+        .into();
+        let upload_wrapper: Element<Message> = container(
+            row!(
+                container(self.core.applet.text(upload_speed.to_string()))
+                    .align_right(Length::FillPortion(3)),
+                container(
+                    row!(
+                        self.core.applet.text(upload_unit.to_string()),
+                        icon::from_name("go-up-symbolic").icon(),
+                    )
+                    .spacing(cosmic.space_xxs())
+                    .align_y(Alignment::Center)
+                )
+                .align_right(Length::FillPortion(4)),
+            )
+            .spacing(cosmic.space_xxs())
+            .align_y(Alignment::Center),
+        )
+        .align_right(Length::Fill)
+        .into();
+        let mut elements: Vec<Element<Message>> = Vec::new();
+        if self.config.show_download_speed {
+            elements.push(download_wrapper);
+        }
+        if self.config.show_upload_speed {
+            elements.push(upload_wrapper);
+        }
+        let widget_width;
+        if self.config.show_download_speed && self.config.show_upload_speed {
+            widget_width = Length::Fixed((self.core.applet.suggested_size(true).0 * 12) as f32);
+        } else {
+            widget_width = Length::Fixed((self.core.applet.suggested_size(true).0 * 6) as f32);
+        }
+        Row::from_vec(elements)
+            .height(Length::Fixed(
+                (self.core.applet.suggested_size(true).1
+                    + 2 * self.core.applet.suggested_padding(true).1) as f32,
+            ))
+            .width(widget_width)
+            .spacing(cosmic.space_xxs())
+            .align_y(Alignment::Center)
+            .into()
     }
 }
 
@@ -165,6 +248,8 @@ impl cosmic::Application for AppModel {
             unit_model,
             bits_entity,
             bytes_entity,
+            rectangle: Rectangle::default(),
+            rectangle_tracker: None,
         };
 
         (app, cosmic::Task::none())
@@ -180,9 +265,7 @@ impl cosmic::Application for AppModel {
     /// This view should emit messages to toggle the applet's popup window, which will
     /// be drawn using the `view_window` method.
     fn view(&self) -> Element<'_, Self::Message> {
-        let theme = cosmic::theme::active();
-        let cosmic = theme.cosmic();
-        // let is_horizontal = self.core.applet.is_horizontal();
+        let is_horizontal = self.core.applet.is_horizontal();
         let download_power = if self.download_speed > 0 {
             self.download_speed.ilog2()
         } else {
@@ -230,88 +313,57 @@ impl cosmic::Application for AppModel {
             }
         }
 
-        let download_wrapper: Element<Message> = container(
-            row!(
-                container(self.core.applet.text(download_speed_display))
-                    .align_right(Length::FillPortion(3)),
-                container(
-                    row!(
-                        self.core.applet.text(download_unit.to_string()),
-                        icon::from_name("go-down-symbolic").icon(),
-                    )
-                    .spacing(cosmic.space_xxs())
-                    .align_y(Alignment::Center)
-                )
-                .align_right(Length::FillPortion(5)),
-            )
-            .spacing(cosmic.space_xxs())
-            .align_y(Alignment::Center),
+        if !is_horizontal || !(self.config.show_download_speed || self.config.show_upload_speed) {
+            return self
+                .core
+                .applet
+                .icon_button(APPID)
+                .on_press_down(Message::TogglePopup)
+                .width(Length::Shrink)
+                .into();
+        }
+
+        let button = button::custom(self.horizontal_layout(
+            &download_speed_display,
+            &download_unit,
+            &upload_speed_display,
+            &upload_unit,
+        ))
+        .padding([0, self.core.applet.suggested_padding(true).0])
+        .on_press_down(Message::TogglePopup)
+        .class(cosmic::theme::Button::AppletIcon);
+        autosize::autosize(
+            if let Some(tracker) = self.rectangle_tracker.as_ref() {
+                Element::from(tracker.container(0, button).ignore_bounds(true))
+            } else {
+                button.into()
+            },
+            AUTOSIZE_MAIN_ID.clone(),
         )
-        .align_right(Length::Fill)
-        .into();
-        let upload_wrapper: Element<Message> = container(
-            row!(
-                container(self.core.applet.text(upload_speed_display))
-                    .align_right(Length::FillPortion(3)),
-                container(
-                    row!(
-                        self.core.applet.text(upload_unit.to_string()),
-                        icon::from_name("go-up-symbolic").icon(),
-                    )
-                    .spacing(cosmic.space_xxs())
-                    .align_y(Alignment::Center)
-                )
-                .align_right(Length::FillPortion(5)),
-            )
-            .spacing(cosmic.space_xxs())
-            .align_y(Alignment::Center),
-        )
-        .align_right(Length::Fill)
-        .into();
-        let mut elements: Vec<Element<Message>> = Vec::new();
-        if self.config.show_download_speed {
-            elements.push(download_wrapper);
-        }
-        if self.config.show_upload_speed {
-            elements.push(upload_wrapper);
-        }
-        let widget_width;
-        if self.config.show_download_speed && self.config.show_upload_speed {
-            widget_width = Length::Fixed((self.core.applet.suggested_size(true).0 * 12) as f32);
-        } else if self.config.show_download_speed || self.config.show_upload_speed {
-            widget_width = Length::Fixed((self.core.applet.suggested_size(true).0 * 7) as f32);
-        } else {
-            widget_width = Length::Fixed((self.core.applet.suggested_size(true).0) as f32);
-            elements.push(icon::from_name(APPID).into());
-        }
-        let wrapper: Element<Message> = Row::from_vec(elements)
-            .height(Length::Fixed(
-                (self.core.applet.suggested_size(true).1
-                    + 2 * self.core.applet.suggested_padding(true).1) as f32,
-            ))
-            .width(widget_width)
-            .padding([0, self.core.applet.suggested_padding(true).0])
-            .spacing(cosmic.space_xxs())
-            .align_y(Alignment::Center)
-            .into();
-        let button = button::custom(wrapper)
-            .on_press_down(Message::TogglePopup)
-            .class(cosmic::theme::Button::AppletIcon);
-        autosize::autosize(container(button), AUTOSIZE_MAIN_ID.clone()).into()
+        .into()
     }
 
     /// The applet's popup window will be drawn using this view method. If there are
     /// multiple poups, you may match the id parameter to determine which popup to
     /// create a view for.
     fn view_window(&self, _id: window::Id) -> Element<'_, Self::Message> {
-        let content_list = widget::list_column()
-            .padding(5)
-            .spacing(0)
-            .add(widget::settings::item(
-                fl!("unit"),
-                segmented_control::horizontal(&self.unit_model).on_activate(Message::UnitChanged),
-            ))
-            .add(widget::settings::item(
+        let Spacing {
+            space_xxxs,
+            space_xxs,
+            space_s,
+            ..
+        } = theme::active().cosmic().spacing;
+        let content = column!(
+            padded_control(
+                column!(
+                    widget::text::body(fl!("unit")),
+                    segmented_control::horizontal(&self.unit_model)
+                        .on_activate(Message::UnitChanged)
+                )
+                .spacing(space_xxxs)
+            ),
+            padded_control(widget::divider::horizontal::default()).padding([space_xxs, space_s]),
+            padded_control(widget::settings::item(
                 fl!("update-rate"),
                 spin_button::spin_button(
                     format!("{} s", self.config.update_rate),
@@ -321,19 +373,23 @@ impl cosmic::Application for AppModel {
                     10,
                     Message::UpdateRateChanged,
                 ),
-            ))
-            .add(
+            )),
+            padded_control(widget::divider::horizontal::default()).padding([space_xxs, space_s]),
+            padded_control(widget::settings::item(
+                fl!("show-download-speed"),
                 toggler(self.config.show_download_speed)
-                    .label(fl!("show-download-speed"))
-                    .on_toggle(Message::ShowDownloadSpeedChanged),
-            )
-            .add(
-                toggler(self.config.show_upload_speed)
-                    .label(fl!("show-upload-speed"))
-                    .on_toggle(Message::ShowUploadSpeedChanged),
-            );
+                    .on_toggle(Message::ShowDownloadSpeedChanged)
+            )),
+            padded_control(widget::divider::horizontal::default()).padding([space_xxs, space_s]),
+            padded_control(widget::settings::item(
+                fl!("show-upload-speed"),
+                toggler(self.config.show_upload_speed).on_toggle(Message::ShowUploadSpeedChanged)
+            ))
+        )
+        .align_x(Alignment::Center)
+        .padding([8, 0]);
 
-        self.core.applet.popup_container(content_list).into()
+        self.core.applet.popup_container(content).into()
     }
 
     /// Register subscriptions for this application.
@@ -344,6 +400,7 @@ impl cosmic::Application for AppModel {
     /// continue to execute for the duration that they remain in the batch.
     fn subscription(&self) -> Subscription<Self::Message> {
         Subscription::batch(vec![
+            rectangle_tracker_subscription(0).map(|e| Message::Rectangle(e.1)),
             (iced::time::every(tokio::time::Duration::from_secs(
                 self.config.update_rate as u64,
             )))
@@ -427,6 +484,14 @@ impl cosmic::Application for AppModel {
                     .set_show_upload_speed(&self.config_helper, show)
                     .unwrap();
             }
+            Message::Rectangle(u) => match u {
+                RectangleUpdate::Rectangle(r) => {
+                    self.rectangle = r.1;
+                }
+                RectangleUpdate::Init(tracker) => {
+                    self.rectangle_tracker = Some(tracker);
+                }
+            },
             Message::UpdateConfig(config) => {
                 self.config = config;
             }

@@ -2,6 +2,8 @@
 
 A Bandwidth Monitor applet for the COSMIC™ desktop.
 
+<img width="543" height="469" alt="screenshot of the applet" src="https://github.com/user-attachments/assets/c0429aef-79c2-422c-a627-8e52b805437b" />
+
 ## Installation
 
 A [justfile](./justfile) is included by default for the [casey/just][just] command runner.

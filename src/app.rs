@@ -1,6 +1,5 @@
 // TODO: Code cleanup
 // TODO: Check default interface dbus config
-// TODO: Bring view close to other applets
 use {
     crate::{
         config::{BitrateAppletConfig, Unit},

@@ -1,9 +1,9 @@
 [package]
 name = "cosmic-ext-applet-bitrate"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 license = "GPL-3.0"
-description = "A Bandwidth Monitor applet for the COSMIC™ desktop."
+description = "A Bandwidth Monitor applet for the COSMIC™ desktop"
 repository = "https://github.com/Aviral-Omar/bitrate.git"
 
 [dependencies]
@@ -15,5 +15,3 @@ libcosmic = { git = "https://github.com/pop-os/libcosmic.git", features = ["appl
 rust-embed = "8.9.0"
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.48.0", features = ["full"] }
-tracing = "0.1.44"
-tracing-subscriber = "0.3.22"

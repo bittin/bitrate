@@ -1,13 +1,28 @@
 use std::fs;
 
 pub fn get_default_network_interface() -> Option<String> {
-    if let Ok(routes) = fs::read_to_string("/proc/net/route") {
-        for line in routes.lines().skip(1) {
-            // Skip header
-            let fields: Vec<&str> = line.split_whitespace().collect();
-            if fields.len() > 1 && fields[1] == "00000000" {
-                return Some(fields[0].to_string());
-            }
+    let paths = fs::read_dir("/sys/class/net").ok()?;
+
+    for entry in paths.flatten() {
+        let iface = entry.file_name().into_string().ok()?;
+
+        // 1. Skip loopback
+        if iface == "lo" {
+            continue;
+        }
+
+        let path = entry.path();
+
+        // 2. Check if the interface is 'up'
+        let operstate = fs::read_to_string(path.join("operstate")).unwrap_or_default();
+        if !operstate.contains("up") {
+            continue;
+        }
+
+        // 3. Check for carrier (physical connection detected)
+        let carrier = fs::read_to_string(path.join("carrier")).unwrap_or_default();
+        if carrier.trim() == "1" {
+            return Some(iface);
         }
     }
     None

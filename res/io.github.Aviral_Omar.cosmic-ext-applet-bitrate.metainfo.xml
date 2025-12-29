@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <component type="desktop-application">
-  <id>io.github.cosmic_utils.cosmic-ext-applet-bitrate</id>
+  <id>io.github.Aviral_Omar.cosmic-ext-applet-bitrate</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>COSMIC</project_group>
-  <developer_name>Aviral Omar</developer_name>
   <update_contact>aviralomar0301@gmail.com</update_contact>
   <name>Bitrate</name>
-  <summary>A Bandwidth Monitor applet for the COSMIC™ desktop.</summary>
+  <summary>A Bandwidth Monitor applet for the COSMIC™ desktop</summary>
+  <description>
+    <p
+        >A lightweight network bandwidth monitoring applet for the COSMIC desktop environment with UI for customization.</p>
+  </description>
+  <developer id="@aviralomar@fosstodon.org">
+    <name>Aviral Omar</name>
+  </developer>
   <icon type="stock">
-    io.github.cosmic_utils.cosmic-ext-applet-bitrate.svg
+    io.github.Aviral_Omar.cosmic-ext-applet-bitrate.svg
   </icon>
   <url type="homepage">https://github.com/Aviral-Omar/bitrate</url>
   <url type="bugtracker">https://github.com/Aviral-Omar/bitrate/issues</url>
@@ -18,25 +24,26 @@
         type="translate"
     >https://github.com/Aviral-Omar/bitrate/tree/main/i18n</url>
   <url type="vcs-browser">https://github.com/Aviral-Omar/bitrate</url>
+  <content_rating type="oars-1.1" />
   <launchable
         type="desktop-id"
-    >io.github.cosmic_utils.cosmic-ext-applet-bitrate.desktop</launchable>
+    >io.github.Aviral_Omar.cosmic-ext-applet-bitrate.desktop</launchable>
     <screenshots>
       <screenshot type="default">
-        <image />
+        <image>
+          https://raw.githubusercontent.com/Aviral-Omar/bitrate/refs/heads/main/res/screenshots/view_window_expanded.png</image>
         <caption
             >The applet in the top panel with the view window open.</caption>
        </screenshot>
     </screenshots>
   <provides>
-    <id>io.github.cosmic_utils.cosmic-ext-applet-bitrate</id>
     <binaries>
-      <binary>bitrate</binary>
+      <binary>cosmic-ext-applet-bitrate</binary>
     </binaries>
   </provides>
-  <requires>
-    <display_length compare="ge">360</display_length>
-  </requires>
+  <recommends>
+    <internet>always</internet>
+  </recommends>
   <supports>
     <control>keyboard</control>
     <control>pointing</control>
@@ -44,9 +51,16 @@
   </supports>
   <categories>
     <category>COSMIC</category>
+    <category>Monitor</category>
+    <category>Network</category>
+    <category>System</category>
+    <category>Utility</category>
   </categories>
   <keywords>
     <keyword>COSMIC</keyword>
+    <keyword>Applet</keyword>
+    <keyword>Bandwidth</keyword>
+    <keyword>Monitor</keyword>
+    <keyword>Network</keyword>
   </keywords>
-  <content_rating type="oars-1.1" />
 </component>

@@ -323,7 +323,7 @@ impl cosmic::Application for AppModel {
 
     type Message = Message;
 
-    const APP_ID: &'static str = "io.github.cosmic_utils.cosmic-ext-applet-bitrate";
+    const APP_ID: &'static str = "io.github.Aviral_Omar.cosmic-ext-applet-bitrate";
 
     fn core(&self) -> &cosmic::Core {
         &self.core

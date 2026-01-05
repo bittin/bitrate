@@ -117,11 +117,15 @@ vendor-extract:
 
 # Bump cargo version, create git commit, and create tag
 tag version:
+    #!/usr/bin/env bash
     find -type f -name Cargo.toml -exec sed -i '0,/^version/s/^version.*/version = "{{version}}"/' '{}' \; -exec git add '{}' \;
     cargo check
     cargo clean
-    git add Cargo.lock    for svg in {{icons-src}}/apps/*.svg; do \
-        rm "{{icons-dst}}/apps/$(basename $svg)"; \
+    git add Cargo.lock
+    for svg in {{icons-src}}/apps/*.svg;
+    do
+        rm "{{icons-dst}}/apps/$(basename $svg)"
+    done
     git commit -m 'release: {{version}}'
     git tag -a {{version}} -m ''
 

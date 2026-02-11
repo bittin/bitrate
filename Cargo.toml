@@ -1,6 +1,6 @@
 [package]
 name = "cosmic-ext-applet-bitrate"
-version = "2.0.1"
+version = "2.0.2"
 edition = "2024"
 license = "GPL-3.0"
 description = "A Bandwidth Monitor applet for the COSMIC™ desktop"
@@ -10,8 +10,8 @@ repository = "https://github.com/Aviral-Omar/bitrate.git"
 futures-util = "0.3.31"
 i18n-embed = { version = "0.16", features = ["fluent-system", "desktop-requester"] }
 i18n-embed-fl = "0.10.0"
-# applet for applet support and dbus-config uses cosmic-settings-daemon to watch for config file changes
-libcosmic = { git = "https://github.com/pop-os/libcosmic.git", features = ["applet", "dbus-config"] }
+# applet for applet support
+libcosmic = { git = "https://github.com/pop-os/libcosmic.git", default-features = false, features = ["applet"] }
 rust-embed = "8.9.0"
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.48.0", features = ["full"] }

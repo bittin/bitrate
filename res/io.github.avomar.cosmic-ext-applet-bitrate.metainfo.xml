@@ -96,6 +96,14 @@
       </ul>
     </description>
   </release>
+  <release version="3.0.0" date="2026-07-28">
+    <description>
+    <p>Release description</p>
+      <ul>
+        <li>Support Frosted Glass</li>
+      </ul>
+    </description>
+  </release>
   <release version="2.0.3" date="2026-03-01">
     <description>
     <p>Release description</p>

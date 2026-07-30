@@ -11,14 +11,12 @@ use {
         cosmic_theme::Spacing,
         iced::{
             self, Alignment, Limits, Rectangle, Subscription,
-            advanced::graphics::text::cosmic_text::{self, Buffer, FontSystem, Metrics, Shaping},
-            widget::{column, row},
+            advanced::graphics::text::cosmic_text::{
+                self, Attrs, Buffer, FontSystem, Metrics, Shaping,
+            },
+            platform_specific::shell::wayland::commands::popup::{destroy_popup, get_popup},
+            widget::{Row, column, row},
             window,
-        },
-        iced_widget::Row,
-        iced_winit::{
-            commands::popup::{destroy_popup, get_popup},
-            graphics::text::cosmic_text::Attrs,
         },
         surface, theme,
         widget::{
@@ -141,14 +139,14 @@ impl AppModel {
 
     fn get_text_width_and_height(&mut self, text: &str, font_config: &FontConfig) -> (f32, f32) {
         let panel_size = self.get_panel_size();
-        let font_size = if panel_size <= 20 {
-            14.0
+        let (font_size, height) = if panel_size <= 20 {
+            (14.0, 20.0)
         } else if panel_size <= 28 {
-            20.0
+            (20.0, 28.0)
         } else if panel_size <= 32 {
-            24.0
+            (24.0, 32.0)
         } else {
-            29.0
+            (28.0, 36.0)
         };
         let font = iced::Font::from(font_config.clone());
         let family = match font.family {
@@ -178,24 +176,15 @@ impl AppModel {
         };
         let attrs = Attrs::new().family(family).weight(weight).style(style);
 
-        let metrics = Metrics::new(font_size.into(), font_size.into());
+        let metrics = Metrics::new(font_size, height);
         // Create a buffer to shape the text
         let mut buffer = Buffer::new(&mut self.font_system, metrics);
-        buffer.set_text(&mut self.font_system, text, &attrs, Shaping::Advanced, None);
+        buffer.set_text(text, &attrs, Shaping::Advanced, None);
+        // Force the shaping and layout engine to run
+        buffer.shape_until_scroll(&mut self.font_system, true);
 
-        // Get the first layout line
-        let layout_line = buffer
-            .lines
-            .first()
-            .unwrap()
-            .layout_opt()
-            .unwrap()
-            .first()
-            .unwrap();
-        (
-            layout_line.w.ceil(),                                      // width
-            (layout_line.max_ascent + layout_line.max_descent).ceil(), // height
-        )
+        let run = buffer.layout_runs().next().unwrap();
+        (run.line_w, run.line_height + run.line_top)
     }
 
     fn set_download_speed_display(&mut self) {
@@ -724,7 +713,7 @@ impl cosmic::Application for AppModel {
         cosmic::Task::none()
     }
 
-    fn style(&self) -> Option<cosmic::iced_runtime::Appearance> {
+    fn style(&self) -> Option<cosmic::iced::theme::Style> {
         Some(cosmic::applet::style())
     }
 }

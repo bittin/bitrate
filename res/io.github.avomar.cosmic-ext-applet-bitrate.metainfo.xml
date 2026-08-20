@@ -88,33 +88,42 @@
     <keyword>Network</keyword>
   </keywords>
   <releases>
-  <release version="2.0.4" date="2026-03-14">
-    <description>
-    <p>Release description</p>
-      <ul>
-        <li>Fixed appstream metainfo validation</li>
-      </ul>
-    </description>
-  </release>
-  <release version="3.0.0" date="2026-07-28">
-    <description>
-    <p>Release description</p>
-      <ul>
-        <li>Support Frosted Glass</li>
-      </ul>
-    </description>
-  </release>
-  <release version="2.0.3" date="2026-03-01">
-    <description>
-    <p>Release description</p>
-      <ul>
-        <li>Added Ukrainian and Czech translations</li>
-      </ul>
-    </description>
-  </release>
+    <release version="3.0.1" date="2026-08-16">
+      <description>
+        <p>Release description</p>
+        <ul>
+          <li>Update libcosmic</li>
+          <li>Fix download/upload symbol getting clipped</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.0" date="2026-07-28">
+      <description>
+        <p>Release description</p>
+        <ul>
+          <li>Support Frosted Glass</li>
+        </ul>
+      </description>
+    </release>
+    <release version="2.0.4" date="2026-03-14">
+      <description>
+        <p>Release description</p>
+        <ul>
+          <li>Fixed appstream metainfo validation</li>
+        </ul>
+      </description>
+    </release>
+    <release version="2.0.3" date="2026-03-01">
+      <description>
+        <p>Release description</p>
+        <ul>
+          <li>Added Ukrainian and Czech translations</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.0.2" date="2026-02-08">
       <description>
-      <p>Release description</p>
+        <p>Release description</p>
         <ul>
           <li>Fix theme not changing in flatpak.</li>
           <li>Add French and Swedish translation.</li>
@@ -123,27 +132,27 @@
       </description>
     </release>
     <release version="2.0.1" date="2026-01-05">
-        <description>
+      <description>
         <p>Release description</p>
-          <ul>
-            <li>Fixed icon not appearing in COSMIC Store</li>
-          </ul>
-        </description>
+        <ul>
+          <li>Fixed icon not appearing in COSMIC Store</li>
+        </ul>
+      </description>
     </release>
     <release version="2.0.0" date="2026-01-05">
       <description>
         <p>Release description</p>
-          <ul>
-            <li>Added dropdown to select network interface</li>
-          </ul>
+        <ul>
+          <li>Added dropdown to select network interface</li>
+        </ul>
       </description>
     </release>
     <release version="1.0.0" date="2025-12-30">
       <description>
         <p>Release description</p>
-          <ul>
-            <li>Initial release</li>
-          </ul>
+        <ul>
+          <li>Initial release</li>
+        </ul>
       </description>
     </release>
   </releases>

@@ -6,14 +6,12 @@
   "sdk-extensions": ["org.freedesktop.Sdk.Extension.rust-stable"],
   "command": "cosmic-ext-applet-bitrate",
   "finish-args": [
-    "--share=network",
     "--filesystem=xdg-config/cosmic:rw",
     "--filesystem=/sys/class/net:ro",
     "--socket=wayland",
     "--device=dri",
     "--talk-name=com.system76.CosmicSettingsDaemon",
-    "--talk-name=org.freedesktop.portal.Desktop",
-    "--talk-name=org.freedesktop.portal.Location"
+    "--talk-name=org.freedesktop.portal.Desktop"
   ],
   "build-options": {
     "append-path": "/usr/lib/sdk/rust-stable/bin",

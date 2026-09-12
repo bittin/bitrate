@@ -14,7 +14,6 @@ use {
             advanced::graphics::text::cosmic_text::{
                 self, Attrs, Buffer, FontSystem, Metrics, Shaping,
             },
-            platform_specific::shell::wayland::commands::popup::{destroy_popup, get_popup},
             widget::{Row, column, row},
             window,
         },
@@ -664,30 +663,37 @@ impl cosmic::Application for AppModel {
             }
             Message::TogglePopup => {
                 return if let Some(p) = self.popup.take() {
-                    destroy_popup(p)
+                    cosmic::surface::surface_task(cosmic::surface::action::destroy_popup(p))
                 } else {
-                    let new_id = window::Id::unique();
-                    self.popup.replace(new_id);
-                    let mut popup_settings = self.core.applet.get_popup_settings(
-                        self.core().main_window_id().unwrap(),
-                        new_id,
+                    cosmic::surface::surface_task(cosmic::surface::action::app_popup(
+                        |_| Default::default(),
+                        |app: &mut Self| {
+                            let new_id = window::Id::unique();
+                            app.popup.replace(new_id);
+
+                            let mut popup_settings = app.core.applet.get_popup_settings(
+                                app.core.main_window_id().unwrap(),
+                                new_id,
+                                None,
+                                None,
+                                None,
+                            );
+                            let Rectangle {
+                                x,
+                                y,
+                                width,
+                                height,
+                            } = app.rectangle;
+                            popup_settings.positioner.anchor_rect = Rectangle {
+                                x: x.max(1.) as i32,
+                                y: y.max(1.) as i32,
+                                width: width.max(1.) as i32,
+                                height: height.max(1.) as i32,
+                            };
+                            popup_settings
+                        },
                         None,
-                        None,
-                        None,
-                    );
-                    let Rectangle {
-                        x,
-                        y,
-                        width,
-                        height,
-                    } = self.rectangle;
-                    popup_settings.positioner.anchor_rect = Rectangle::<i32> {
-                        x: x.max(1.) as i32,
-                        y: y.max(1.) as i32,
-                        width: width.max(1.) as i32,
-                        height: height.max(1.) as i32,
-                    };
-                    get_popup(popup_settings)
+                    ))
                 };
             }
             Message::ThemeChanged(theme) => {
